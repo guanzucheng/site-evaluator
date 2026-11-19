@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>豫膳煌 · 选址评分卡</title>
+<meta name="theme-color" content="#b4551c">
+<meta name="description" content="填 10 项信息，30 秒给出点位评分、结论和待核实清单。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b4551c'/%3E%3Cpath d='M9 22h14M11 22c0-6 10-6 10 0' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#1d1a17; --ink-2:#5b5450; --ink-3:#8b827c;
+  --line:#e3ded7; --bg:#faf8f5; --card:#fff;
+  --accent:#b4551c; --accent-soft:#f4e7dc;
+  --ok:#2f6b46; --ok-soft:#e7f0ea;
+  --warn:#a8321c; --warn-soft:#fbeae6;
+  --mid:#8a6a12; --mid-soft:#f7efd8;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.58; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 80px;min-width:0}
+header.top{position:sticky;top:0;z-index:30;background:rgba(250,248,245,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;align-items:center}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:.3px;font-size:15px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.nav{margin-left:auto;display:flex;gap:4px;background:#f1ece5;border-radius:99px;padding:3px}
+.nav button{font:inherit;font-size:13px;border:0;background:none;color:var(--ink-2);padding:5px 11px;border-radius:99px;cursor:pointer;white-space:nowrap}
+.nav button.on{background:#fff;color:var(--accent);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin:14px 0}
+.card h2{font-size:15px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+.card h2 .n{width:20px;height:20px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
+.hint{color:var(--ink-3);font-size:12.5px;margin:3px 0 12px}
+.field{margin:12px 0}
+.field > label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:6px;font-weight:500}
+.field > label .req{color:var(--accent);font-size:11px;margin-left:4px;font-weight:600}
+input[type=text],input[type=number],input[type=password],select,textarea{
+  font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;
+}
+input:focus,select:focus{outline:2px solid #e9d6c7;outline-offset:0;border-color:#dcc3ae}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:13.5px;background:#fff;border:1px solid var(--line);color:var(--ink-2);padding:8px 12px;border-radius:9px;cursor:pointer;line-height:1.3;transition:.12s}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.chip.on.unk{background:#6f6862;border-color:#6f6862}
+.btn{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:13px 18px;cursor:pointer;width:100%}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:#fff;color:var(--accent)}
+.btn.plain{background:#fff;color:var(--ink-2);border-color:var(--line);width:auto;padding:8px 13px;font-weight:500}
+.btn.sm{padding:9px 14px;font-size:13.5px;width:auto}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+.tip.err{color:var(--warn)}
+.inline2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.inline2{grid-template-columns:1fr}}
+.unitline{font-size:12.5px;color:var(--ink-2);margin-top:6px;background:#faf6f1;border:1px dashed var(--line);border-radius:8px;padding:7px 10px}
+.sep{height:1px;background:var(--line);margin:14px 0}
+/* ---------- 结果卡 ---------- */
+.res{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:14px 0}
+.res-top{padding:20px 18px 16px;background:linear-gradient(180deg,#fdf9f5,#fff);border-bottom:1px solid var(--line);position:relative}
+.res-name{font-size:13px;color:var(--ink-3);margin-bottom:2px;word-break:break-all}
+.res-title{font-size:20px;font-weight:700;letter-spacing:.2px;word-break:break-all}
+.scorebox{display:flex;align-items:flex-end;gap:10px;margin:14px 0 10px}
+.score{font-size:56px;font-weight:800;line-height:.92;font-variant-numeric:tabular-nums;letter-spacing:-2px}
+.score em{font-size:15px;font-style:normal;font-weight:600;color:var(--ink-3);margin-left:2px;letter-spacing:0}
+.grade{font-size:14px;font-weight:700;padding:5px 12px;border-radius:99px;white-space:nowrap}
+.g-A{background:var(--ok-soft);color:var(--ok)}
+.g-B{background:var(--mid-soft);color:var(--mid)}
+.g-C{background:var(--accent-soft);color:var(--accent)}
+.g-D{background:var(--warn-soft);color:var(--warn)}
+.g-X{background:#efebe6;color:#6f6862}
+.verdict{font-size:15.5px;line-height:1.7;color:#2b2723;background:#fbf7f2;border-left:3px solid var(--accent);padding:11px 13px;border-radius:0 8px 8px 0;margin-top:10px}
+.dims{padding:16px 18px;border-bottom:1px solid var(--line)}
+.dim{display:grid;grid-template-columns:76px 1fr 46px;gap:10px;align-items:center;margin:9px 0}
+.dim .dn{font-size:13px;color:var(--ink-2)}
+.dim .track{height:7px;background:#f1ece5;border-radius:99px;overflow:hidden}
+.dim .fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s}
+.dim .fill.low{background:#c9a48a}
+.dim .dv{font-size:12.5px;color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums}
+.facts{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;border-bottom:1px solid var(--line)}
+@media(max-width:340px){.facts{grid-template-columns:1fr}}
+.fact{background:#faf8f5;border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.fact .k{font-size:11px;color:var(--ink-3)}
+.fact .v{font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;word-break:break-all;line-height:1.35}
+.sect{padding:15px 18px;border-bottom:1px solid var(--line)}
+.sect:last-child{border-bottom:0}
+.sect h3{font-size:14px;margin:0 0 9px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.sect h3 .bar2{width:3px;height:13px;background:var(--accent);border-radius:2px}
+.list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.list li{font-size:13.5px;line-height:1.65;color:#332f2b;padding-left:18px;position:relative}
+.list li:before{content:"";position:absolute;left:4px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.list.check li:before{background:#a89a8c;border-radius:2px;transform:rotate(45deg);width:5px;height:5px}
+.flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.flag{font-size:12px;padding:4px 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.meta{font-size:11.5px;color:var(--ink-3);text-align:center;padding:12px 18px 16px;letter-spacing:.3px}
+/* ---------- 点位列表 ---------- */
+.empty{text-align:center;color:var(--ink-3);padding:26px 10px;font-size:13.5px}
+.pitem{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed var(--line)}
+.pitem:last-child{border-bottom:0}
+.pitem .rank{width:26px;height:26px;border-radius:8px;background:#f1ece5;color:var(--ink-2);font-size:12.5px;font-weight:700;display:grid;place-items:center;flex:none}
+.pitem .rank.r1{background:var(--accent);color:#fff}
+.pitem .body{flex:1;min-width:0}
+.pitem .t{font-weight:600;font-size:14px;word-break:break-all}
+.pitem .s{font-size:12.5px;color:var(--ink-3);margin-top:2px;word-break:break-all}
+.pitem .right{text-align:right;flex:none}
+.pitem .sc{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.pitem .del{font-size:12px;color:var(--ink-3);background:none;border:0;cursor:pointer;padding:2px 4px;margin-top:4px}
+/* ---------- 地图 ---------- */
+.mapbox{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px;background:#fbf9f6;display:none}
+.mapbox.on{display:block}
+.mapbox .sr{display:flex;gap:8px}
+.mapbox .sr input{flex:1}
+#mapCanvas{height:260px;border-radius:9px;margin-top:10px;background:#efe9e1;border:1px solid var(--line);overflow:hidden}
+.sug{display:grid;gap:6px;margin-top:9px;max-height:190px;overflow:auto}
+.sug button{text-align:left;font:inherit;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 11px;cursor:pointer;color:var(--ink)}
+.sug button:hover{border-color:#dcc3ae}
+.sug .sub{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+#mStats{margin-top:9px}
+.hide{display:none}
+.warnline{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:9px 11px;margin-top:9px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="dot"></span>豫膳煌 · 选址评分卡</div>
+    <div class="nav">
+      <button class="navbtn on" data-view="form">评分</button>
+      <button class="navbtn" data-view="list">我的点位</button>
+      <button class="navbtn" data-view="set">设置</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= 填写 ================= -->
+  <div id="view-form">
+    <div class="card">
+      <h2>先看一眼规则</h2>
+      <div class="hint" style="margin-bottom:0">
+        一共 10 项，填完直接出分。拿不准的选「不确定」，系统会按中性处理，并在结论里提示你去现场补哪几项——不会因为填「不确定」就故意扣死你。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">1</span>这是哪个点位</h2>
+      <div class="hint">名字写清楚方便你后面几个点对比，比如「花园路地铁口店」。</div>
+
+      <div class="field">
+        <label for="fName">点位名称 <span class="req">必填</span></label>
+        <input type="text" id="fName" placeholder="例：农业路与经三路交叉口（原床上用品店）" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="fType">店型 <span class="req">必填</span></label>
+        <select id="fType"></select>
+      </div>
+
+      <div class="field">
+        <label for="fAddr">详细地址 <span class="req">必填</span></label>
+        <input type="text" id="fAddr" placeholder="例：郑州市金水区农业路 12 号（可点下方地图选点自动填）" autocomplete="off">
+        <div class="bar" style="margin-top:8px">
+          <button class="btn plain" id="btnMap">在地图上选点</button>
+          <button class="btn plain" id="btnNav">地图里看这条路</button>
+        </div>
+        <div class="mapbox" id="mapbox">
+          <div class="sr">
+            <input type="text" id="mQ" placeholder="输入小区 / 街道 / 店名，如「正弘城」「花园路国贸」">
+            <button class="btn sm" id="mGo">搜索</button>
+          </div>
+          <div class="sug" id="mSug"></div>
+          <div id="mapCanvas"></div>
+          <div class="bar" style="margin-top:9px">
+            <button class="btn plain" id="mHere">定位到我</button>
+            <button class="btn plain" id="mUse">用这个点</button>
+          </div>
+          <div id="mStats"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span>人气和周边</h2>
+      <div class="hint">客流按「门口从早到晚经过的人次」估，不用精确，估个数就行。</div>
+
+      <div class="field">
+        <label>日均客流（早 6:30–11:00 门口经过人次）<span class="req">必填</span></label>
+        <div class="chips" id="cTraffic"></div>
+      </div>
+
+      <div class="field">
+        <label>周边 800 米主要是什么 <span class="req">必填</span></label>
+        <div class="chips" id="cBiz"></div>
+      </div>
+
+      <div class="field">
+        <label>500 米内同类竞品（胡辣汤 / 早餐店 / 快餐）</label>
+        <div class="chips" id="cComp"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label>门头可见度</label>
+        <div class="chips" id="cVis"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span>成本与门店条件</h2>
+      <div class="hint">租金和面积填了会实时算出单价，这是最容易劝退人的一项。</div>
+
+      <div class="inline2">
+        <div class="field">
+          <label for="fRent">月租金（元/月）<span class="req">必填</span></label>
+          <input type="number" id="fRent" inputmode="numeric" placeholder="例：9000">
+        </div>
+        <div class="field">
+          <label for="fArea">使用面积（㎡）<span class="req">必填</span></label>
+          <input type="number" id="fArea" inputmode="decimal" placeholder="例：150">
+        </div>
+      </div>
+      <div class="unitline" id="unitLine">填了租金和面积，这里会显示每平米每月多少钱，以及和你选的店型比是高还是低。</div>
+
+      <div class="field" style="margin-bottom:0;margin-top:12px">
+        <label>门店硬件条件（能确认几项勾几项，不勾不扣分）</label>
+        <div class="chips" id="cCond"></div>
+      </div>
+    </div>
+
+    <div class="bar" style="margin:16px 0">
+      <button class="btn" id="btnScore" style="flex:1">出评分和结论</button>
+    </div>
+    <div class="tip err hide" id="formErr"></div>
+  </div>
+
+  <!-- ================= 结果 ================= -->
+  <div id="view-result" class="hide">
+    <div class="res">
+      <div class="res-top">
+        <div class="res-name" id="rName"></div>
+        <div class="res-title">选址评分结论</div>
+        <div class="scorebox">
+          <div class="score"><span id="rScore">0</span><em>分</em></div>
+          <div class="grade g-B" id="rGrade">—</div>
+        </div>
+        <div class="verdict" id="rVerdict"></div>
+        <div class="flags" id="rFlags"></div>
+      </div>
+
+      <div class="dims" id="rDims"></div>
+
+      <div class="facts" id="rFacts"></div>
+
+      <div class="sect">
+        <h3><span class="bar2"></span>下一步动作</h3>
+        <ul class="list" id="rAdvice"></ul>
+      </div>
+
+      <div class="sect">
+        <h3><span class="bar2"></span>去现场还要核实</h3>
+        <ul class="list check" id="rCheck"></ul>
+      </div>
+
+      <div class="sect">
+        <h3><span class="bar2"></span>模型说明</h3>
+        <div class="tip" id="rNote" style="margin-top:0"></div>
+      </div>
+
+      <div class="meta" id="rMeta"></div>
+    </div>
+
+    <div class="bar" style="margin:14px 0">
+      <button class="btn" id="btnSave" style="flex:1">保存这个点位</button>
+      <button class="btn ghost sm" id="btnCopy">复制结论</button>
+      <button class="btn plain sm" id="btnBack">改一改</button>
+    </div>
+  </div>
+
+  <!-- ================= 列表 ================= -->
+  <div id="view-list" class="hide">
+    <div class="card">
+      <h2>我的点位</h2>
+      <div class="hint">点「保存这个点位」后，这里会按分数从高到低排。只看分数和一句话结论就够，细节点进去看。</div>
+      <div id="listBody"></div>
+    </div>
+  </div>
+
+  <!-- ================= 设置 ================= -->
+  <div id="view-set" class="hide">
+    <div class="card">
+      <h2>地图配置</h2>
+      <div class="hint">填了 Key，上面就能直接搜地址、地图选点、自动统计周边业态。不填也能用，只是地址得手打。</div>
+
+      <div class="field">
+        <label for="kAmap">高德 Web 端（JS API）Key</label>
+        <input type="text" id="kAmap" placeholder="形如 a1b2c3d4e5f6..." autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="kAmapSec">高德安全密钥 jscode（新版 Key 必填）</label>
+        <input type="password" id="kAmapSec" placeholder="与 Key 配套的那串安全密钥" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="kBaidu">百度地图浏览器端 AK（可选，用于地址联想/静态导航）</label>
+        <input type="text" id="kBaidu" placeholder="形如 ABCD1234..." autocomplete="off">
+      </div>
+      <div class="bar">
+        <button class="btn sm" id="btnCfgSave">保存配置</button>
+        <button class="btn plain sm" id="btnCfgClear">清空</button>
+      </div>
+      <div class="tip" id="cfgTip"></div>
+      <div class="warnline">
+        Key 只存在你自己手机/电脑的浏览器里，不会上传到任何服务器，也不会提交到 GitHub。<br>
+        高德 Key 需要把域名 <b>guanzucheng.github.io</b> 加进白名单，否则手机上会提示「INVALID_USER_DOMAIN」。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>怎么申请 Key（各 3 分钟，免费）</h2>
+      <div class="hint" style="margin-bottom:8px">高德：</div>
+      <ul class="list" style="margin-bottom:12px">
+        <li>打开 <b>console.amap.com/dev/key/app</b>，用高德账号登录（支付宝/淘宝账号可直接登）。</li>
+        <li>「创建新应用」→ 应用名随便写，比如「豫膳煌选址」。</li>
+        <li>添加 Key：服务平台选 <b>Web端(JS API)</b>，域名白名单填 <b>guanzucheng.github.io</b>。</li>
+        <li>提交后会给你两串：<b>Key</b> 和 <b>安全密钥 jscode</b>，两个都填到上面。</li>
+      </ul>
+      <div class="hint" style="margin-bottom:8px">百度（可选）：</div>
+      <ul class="list">
+        <li>打开 <b>lbsyun.baidu.com/apiconsole/key</b>，注册开发者后创建应用。</li>
+        <li>应用类型选 <b>浏览器端</b>，Referer 白名单填 <b>guanzucheng.github.io</b>，拿到 AK 填到上面。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>这个工具怎么算分</h2>
+      <div class="tip" style="margin:0">
+        六个维度，合计 100 分：客流 30、周边业态 20、租金单价 20、竞品环境 10、门店硬件 10、门头可见度 10。
+        另外有三条硬规则会直接把等级往下压一档：缺排烟且没有明火、缺上下水、租金单价超过店型基准 1.5 倍同时客流偏弱。
+        分数只做初筛，签约前一定要去现场蹲点。
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
