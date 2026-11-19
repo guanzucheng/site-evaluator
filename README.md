@@ -65,8 +65,17 @@ python3 -m http.server 8080
 
 - `index.html` 页面与样式
 - `app.js` 评分模型、结论话术、地图接入、本地存储
-- `.github/workflows/pages.yml` GitHub Pages 自动部署
+
+## 发布方式（重要）
+
+线上站点由 `guanzucheng/guanzucheng.github.io` 仓库的 `site-evaluator/` 子目录提供（这个仓库的 Pages 长期开启，所以链接永久有效）。
+
+本仓库 `guanzucheng/site-evaluator` 是源码备份 / 讨论用仓库，**不要给它启用 Pages**，否则会和站点仓库的同名路径抢地址。
+
+改完口径后的发布动作：把 `index.html`、`app.js` 同时更新到站点仓库的 `site-evaluator/` 目录，等 1–2 分钟刷新页面即可，不用改任何设置。
+
+注：GitHub Actions 令牌无权自动开启 Pages，之前试过的 `configure-pages` 自动部署方案会失败，已移除，别再走那条路。
 
 ## 改口径
 
-评分权重、店型基准租金、各档分数都在 `app.js` 顶部常量里（`TYPES` / `TRAFFIC` / `BIZ` / `COMP` / `VIS` / `COND`），改完 push 到 main 会自动重新部署。
+评分权重、店型基准租金、各档分数都在 `app.js` 顶部常量里（`TYPES` / `TRAFFIC` / `BIZ` / `COMP` / `VIS` / `COND`）。
